@@ -1,116 +1,142 @@
 // Build the metadata panel
 function buildMetadata(sample) {
-  d3.json("https://static.bc-edx.com/data/dl-1-2/m14/lms/starter/samples.json").then((data) => {
+  d3.json("https://static.bc-edx.com/data/dl-1-2/m14/lms/starter/samples.json").then(function(data){
+
+    // Convert sample to an int
+    let sampleInt = parseInt(sample);
 
     // get the metadata field
-    const metadata = data.metadata;
-
+    let metaData = data['metadata'];
+  
     // Filter the metadata for the object with the desired sample number
-    const resultz = metadata.filter(sampleObj => sampleObj.id == sample);
-    const filterResultz = resultz[0]
-
+    let filteredMetaData = metaData.filter(function(obj){
+      return obj['id'] === sampleInt
+    });
+    console.log(filteredMetaData)
     // Use d3 to select the panel with id of `#sample-metadata`
-    const panelz = d3.select('#sample-metadata');
+    let sampleMetaData = d3.select('#sample-metadata');
 
     // Use `.html("") to clear any existing metadata
-    panelz.html("");
+    sampleMetaData.html('');
 
-
-    // Inside a loop, you will need to use d3 to append new tags for each key-value in the filtered metadata.
-    Object.entries(filterResultz).forEach(([key, value]) => {
-      panelz.append("h6").text(`${key}: ${value}`);
+    // Inside a loop, you will need to use d3 to append new
+    // tags for each key-value in the filtered metadata.
+    filteredMetaData.forEach(function(item){
+      for (let key in item){
+        sampleMetaData.append('p').text(`${key.toUpperCase()}: ${item[key]}`);
+      }
     });
   });
 }
 
+
 // function to build both charts
 function buildCharts(sample) {
-  d3.json("https://static.bc-edx.com/data/dl-1-2/m14/lms/starter/samples.json").then((data) => {
+  d3.json("https://static.bc-edx.com/data/dl-1-2/m14/lms/starter/samples.json").then(function(data){
+
+  // Convert sample to a string
+  var sampleString = sample.toString();
+
 
     // Get the samples field
-    const samples = data.samples;
+    var sampleData = data['samples']
 
     // Filter the samples for the object with the desired sample number
-    const SampleNumber = samples.filter(sampleObj => sampleObj.id == sample);
-    const filterSampleNumber = SampleNumber[0]
-
+    var filteredSampleData = sampleData.filter(function(obj){
+      return obj['id'] === sampleString
+    })
+    
     // Get the otu_ids, otu_labels, and sample_values
-    const otu_ids = filterSampleNumber.otu_ids;
-    const otu_labels = filterSampleNumber.otu_labels;
-    const sample_values = filterSampleNumber.sample_values;
-
-
+    var otuIds = filteredSampleData[0]['otu_ids']
+    var otuLabels = filteredSampleData[0]['otu_labels']
+    var sampleValues = filteredSampleData[0]['sample_values']
+    
     // Build a Bubble Chart
-    const BubbleChartData = [{
-      x: otu_ids,
-      y: sample_values,
-      text: otu_labels,
-      mode: 'markers',
-      marker: {
-        size: sample_values,
-        color: otu_ids,
-        colorscale: "Earth"
-      }
-    }];
-    const BubbleChart = {
-      title: "Bacteria Cultures Per Sample",
-      hovermode: "closest",
-      margin: { t: 0 },
-      hoverlabel: { bgcolor: "white" },
-      xaxis: { title: "OTU ID" },
-      yaxis: { title: "Number of Bacteria" }
+    var trace = {
+      'x': otuIds,
+      'y':sampleValues,
+      'mode': 'markers',
+      'marker': {
+        'color': otuIds,
+        'colorscale': 'Portland',
+        'size': sampleValues*2
+      },
+      'text': otuLabels
     };
+    var data = [trace];
+
+    var layout = {
+      'title':'Bacteria Cultures Per Sample',
+      xaxis: {
+        title: 'OTU IDs' 
+    },
+    yaxis: {
+        title: 'Number of Bacteria' 
+    }
+    }
+
 
     // Render the Bubble Chart
-    Plotly.newPlot("bubble", BubbleChartData, BubbleChart);
+    Plotly.newPlot('bubble',data,layout)
 
-    // For the Bar Chart, map the otu_ids to a list of strings for your yticks using slice and reverse
-    const yticks = otu_ids.slice(0, 10).map(otu_id => `OTU ${otu_id}`).reverse();
+    // For the Bar Chart, map the otu_ids to a list of strings for your yticks
+    var otuIdsStrings = otuIds.map(function(ids){
+      return "OTU " + ids.toString();
+    })
 
     // Build a Bar Chart
     // Don't forget to slice and reverse the input data appropriately
-    const BarChartData = [{
-      x: sample_values.slice(0, 10).reverse(),
-      y: yticks,
-      text: otu_labels.slice(0, 10).reverse(),
-      type: "bar",
-      orientation: "h"
-    }];
-    const BarChart = {
-      title: "Top 10 Bacteria Types Found Is",
-      margin: { t: 30, l: 150 }
-    };
+    var trace1 = {
+      'x' : sampleValues.slice(0,10).reverse(),
+      'y' : otuIdsStrings.slice(0,10).reverse(),
+      'type':'bar',
+      'orientation': 'h',
+      'hovertext': otuLabels.slice(0,10).reverse(),
+      'marker':{
+        'color':otuIds,
+        'colorscale': 'Portland'
+      }
 
+    }
+    var data1 = [trace1]
+    var layout = {
+      'title': 'Top 10 Bacteria Cultures Found'
+    }
     // Render the Bar Chart
-    Plotly.newPlot("bar", BarChartData, BarChart);
+    Plotly.newPlot('bar',data1,layout)
 
   });
 }
 
+
 // Function to run on page load
 function init() {
-  d3.json("https://static.bc-edx.com/data/dl-1-2/m14/lms/starter/samples.json").then((data) => {
+  d3.json("https://static.bc-edx.com/data/dl-1-2/m14/lms/starter/samples.json").then(function (data) {
+
 
     // Get the names field
-    const names = data.names;
+    var names = data['names'];
 
     // Use d3 to select the dropdown with id of `#selDataset`
-    const dropdown = d3.select('#selDataset');
+    var dropdown = d3.select('#selDataset');
 
     // Use the list of sample names to populate the select options
     // Hint: Inside a loop, you will need to use d3 to append a new
     // option for each sample name.
+    names.forEach(function (name) {
+      dropdown.append("option")
+              .text(name)
+              .attr("value", name);
+  });
 
-    names.forEach((name) => {
-      dropdown.append("option").text(name).property("value", name);
-    });
+  // Get the first sample from the list
+  var firstSample = names[0];
 
-    // Get the first sample from the list
-    const firstSample = names[0];
+  // Build charts and metadata panel with the first sample
+  buildCharts(firstSample);
+  buildMetadata(firstSample);
 
-    // Build charts and metadata panel with the first sample
-    buildCharts(firstSample);
-    buildMetadata(firstSample);
+
   });
 }
 
@@ -118,7 +144,7 @@ function init() {
 function optionChanged(newSample) {
   // Build charts and metadata panel each time a new sample is selected
   buildCharts(newSample);
-  buildMetadata(newSample);
+  buildMetadata(newSample)
 }
 
 // Initialize the dashboard
